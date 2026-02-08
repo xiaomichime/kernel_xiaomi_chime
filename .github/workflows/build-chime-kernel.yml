@@ -1,0 +1,89 @@
+name: Build & Release chime Kernel (AnyKernel3 + ReSukiSU + SuSFS)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Release Kernel
+    runs-on: ubuntu-22.04
+    env:
+      KERNEL_REPO: https://github.com/Dominium-Apum/kernel_xiaomi_chime
+      KERNEL_BRANCH: main
+      DEFCONFIG: chime_defconfig
+      PROTON_CLANG_REPO: https://github.com/kdrag0n/proton-clang
+      PROTON_CLANG_BRANCH: master
+      ANYKERNEL_REPO: https://github.com/easterNday/AnyKernel3
+      ANYKERNEL_BRANCH: master
+
+    steps:
+
+    - name: Checkout kernel source
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ env.KERNEL_REPO }}
+        ref: ${{ env.KERNEL_BRANCH }}
+        fetch-depth: 0
+
+    - name: Checkout AnyKernel3 template
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ env.ANYKERNEL_REPO }}
+        ref: ${{ env.ANYKERNEL_BRANCH }}
+        path: anykernel3
+
+    - name: Setup build tools
+      run: |
+        sudo apt update
+        sudo apt install -y bc build-essential curl git
+
+    - name: Install Proton-Clang toolchain
+      run: |
+        git clone --depth=1 --branch ${{ env.PROTON_CLANG_BRANCH }} ${{ env.PROTON_CLANG_REPO }} proton-clang
+        export PATH=${{ github.workspace }}/proton-clang/bin:$PATH
+
+    - name: Apply ReSukiSU KernelSU integration
+      run: |
+        # This adds KernelSU support (ReSukiSU/branch defaults)
+        curl -LSs https://raw.githubusercontent.com/resukisu/Resukisu/main/kernel/setup.sh | bash -s main
+        # Ensure CONFIG_KSU and needed hooks are enabled in defconfig
+
+    - name: Apply SuSFS support patches
+      run: |
+        # Clone susfs4ksu patch repo
+        git clone https://github.com/Star-Seven/susfs4ksu susfs4ksu
+        # Copy patches into kernel tree
+        cp susfs4ksu/kernel_patches/10_enable_susfs_for_ksu.patch KernelSU/
+        cp susfs4ksu/kernel_patches/50_add_susfs_in_kernel-*.patch .
+        cp susfs4ksu/kernel_patches/fs/* fs/
+        cp susfs4ksu/kernel_patches/include/linux/* include/linux/
+        # Apply them
+        patch -p1 < KernelSU/10_enable_susfs_for_ksu.patch
+        patch -p1 < 50_add_susfs_in_kernel-*.patch
+
+    - name: Configure kernel
+      run: |
+        make O=out ARCH=arm64 ${{ env.DEFCONFIG }}
+
+    - name: Build kernel
+      run: |
+        make -j$(nproc) O=out ARCH=arm64 \
+          CC=clang CLANG_TRIPLE=aarch64-linux-gnu-
+
+    - name: Package into AnyKernel3 flashable ZIP
+      run: |
+        mkdir -p anykernel3/out
+        cp out/arch/arm64/boot/Image.gz-dtb anykernel3/
+        cd anykernel3
+        zip -r9 chime-kernel-flashable.zip .
+
+    - name: Upload to GitHub Release
+      uses: ncipollo/release-action@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: "v${{ github.run_number }}"
+        name: "chime-kernel-v${{ github.run_number }}"
+        artifacts: anykernel3/chime-kernel-flashable.zip
