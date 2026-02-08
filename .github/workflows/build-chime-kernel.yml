@@ -11,7 +11,7 @@ jobs:
     name: Build & Release Kernel
     runs-on: ubuntu-22.04
     env:
-      KERNEL_REPO: https://github.com/Dominium-Apum/kernel_xiaomi_chime
+      KERNEL_REPO: Dominium-Apum/kernel_xiaomi_chime
       KERNEL_BRANCH: main
       DEFCONFIG: chime_defconfig
       PROTON_CLANG_REPO: https://github.com/kdrag0n/proton-clang
