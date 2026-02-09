@@ -51,19 +51,6 @@ jobs:
         curl -LSs https://raw.githubusercontent.com/resukisu/Resukisu/main/kernel/setup.sh | bash -s main
         # Ensure CONFIG_KSU and needed hooks are enabled in defconfig
 
-    - name: Apply SuSFS support patches
-      run: |
-        # Clone susfs4ksu patch repo
-        git clone https://gitlab.com/simonpunk/susfs4ksu/ susfs4ksu
-        # Copy patches into kernel tree
-        cp susfs4ksu/kernel_patches/10_enable_susfs_for_ksu.patch KernelSU/
-        cp susfs4ksu/kernel_patches/50_add_susfs_in_kernel-*.patch .
-        cp susfs4ksu/kernel_patches/fs/* fs/
-        cp susfs4ksu/kernel_patches/include/linux/* include/linux/
-        # Apply them
-        patch -p1 < KernelSU/10_enable_susfs_for_ksu.patch
-        patch -p1 < 50_add_susfs_in_kernel-*.patch
-
     - name: Configure kernel
       run: |
         make O=out ARCH=arm64 ${{ env.DEFCONFIG }}
