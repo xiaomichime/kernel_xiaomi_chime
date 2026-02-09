@@ -54,7 +54,7 @@ jobs:
     - name: Apply SuSFS support patches
       run: |
         # Clone susfs4ksu patch repo
-        git clone https://github.com/Star-Seven/susfs4ksu susfs4ksu
+        git clone https://gitlab.com/simonpunk/susfs4ksu/ susfs4ksu
         # Copy patches into kernel tree
         cp susfs4ksu/kernel_patches/10_enable_susfs_for_ksu.patch KernelSU/
         cp susfs4ksu/kernel_patches/50_add_susfs_in_kernel-*.patch .
