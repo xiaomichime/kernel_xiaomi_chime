@@ -1,0 +1,48 @@
+name: Build Kernel with ReSukiSU
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Update environment
+        run: sudo apt update -y
+
+      - name: Install dependencies
+        run: sudo apt install -y git build-essential zip curl
+
+      # ➤ Download & apply ReSukiSU script
+      - name: Apply ReSukiSU patch from internet
+        run: |
+          # Move to kernel source root
+          cd $GITHUB_WORKSPACE
+
+          # Download the setup script
+          curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/refs/heads/main/kernel/setup.sh" -o resukisu_setup.sh
+          chmod +x resukisu_setup.sh
+
+          # Run the setup script
+          # The script will integrate ReSukiSU into your kernel source
+          bash resukisu_setup.sh
+
+      # ➤ Now download regular toolchain
+      - name: Download Neutron Toolchain
+        run: bash scripts/hani-ci.sh --tools
+
+      # ➤ Build the kernel
+      - name: Build hanikrnl
+        run: bash scripts/hani-ci.sh --build
+
+      - name: Upload kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: hanikrnl
+          path: 4.19-hanikrnl.*-chime*.zip
