@@ -14,7 +14,7 @@ jobs:
       KERNEL_REPO: xiaomichime/kernel_xiaomi_chime
       KERNEL_BRANCH: main
       DEFCONFIG: chime_defconfig
-      PROTON_CLANG_REPO: xiaomichime/proton-clang
+      PROTON_CLANG_REPO: https://github.com/xiaomichime/proton-clang
       PROTON_CLANG_BRANCH: master
       ANYKERNEL_REPO: osm0sis/AnyKernel3
       ANYKERNEL_BRANCH: master
@@ -66,7 +66,7 @@ jobs:
 
     - name: Configure kernel
       run: |
-        make O=out ARCH=arm64 chime_deconfig
+        make O=out ARCH=arm64 ${{ env.DEFCONFIG }}
 
     - name: Build kernel
       run: |
