@@ -14,7 +14,7 @@ jobs:
     env:
       KERNEL_REPO: xiaomichime/kernel_xiaomi_chime
       KERNEL_BRANCH: main
-      DEFCONFIG: vendor/chime-stock_defconfig
+      DEFCONFIG: chime_defconfig
       PROTON_CLANG_REPO: https://github.com/xiaomichime/proton-clang
       PROTON_CLANG_BRANCH: master
       ANYKERNEL_REPO: osm0sis/AnyKernel3
